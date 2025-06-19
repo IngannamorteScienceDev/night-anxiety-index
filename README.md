@@ -1,5 +1,10 @@
 # 🌃 Night Anxiety Index
 
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
+![License](https://img.shields.io/badge/License-Apache%202.0-green)
+![Status](https://img.shields.io/badge/Status-Final-orange)
+![Made with](https://img.shields.io/badge/Made%20with-🛰%20Data%20Science-ff69b4)
+
 **Does the brightness of a city at night reflect the anxiety within?**  
 This project explores a potential link between nighttime light intensity and the prevalence of anxiety disorders across countries, using real-world satellite and health data.
 
