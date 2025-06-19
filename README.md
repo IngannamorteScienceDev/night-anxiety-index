@@ -112,6 +112,17 @@ Despite limited statistical correlation, this project illustrates:
 
 ---
 
+### 🌐 Global Anxiety Prevalence (2019)
+
+Choropleth visualization based on WHO mental health statistics.  
+Each country is colored by the share of population with anxiety disorders in 2019.
+
+![Final Anxiety Map](outputs/plots/final_anxiety_map.png)
+
+🔗 [Click here to open the interactive version (locally)](outputs/plots/final_anxiety_map.html)
+
+---
+
 ## 🚀 How to Run
 
 ```bash
