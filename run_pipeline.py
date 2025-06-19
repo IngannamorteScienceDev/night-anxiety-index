@@ -4,8 +4,9 @@ import sys
 import platform
 import re
 import shutil
+from tqdm import tqdm
 
-# === List of scripts to run in sequence ===
+# === List of scripts to run in order ===
 SCRIPTS = [
     "scripts/preprocess_anxiety_data.py",
     "scripts/preprocess_nightlight.py",
@@ -16,7 +17,7 @@ SCRIPTS = [
     "scripts/final_map.py"
 ]
 
-# === Directories to clear before starting the pipeline ===
+# === Folders to clear before pipeline run (but NOT data/raw) ===
 FOLDERS_TO_CLEAN = [
     "data/processed",
     "models",
@@ -24,7 +25,7 @@ FOLDERS_TO_CLEAN = [
     "outputs/plots"
 ]
 
-# === Detect if terminal cannot handle emojis (common on Windows) ===
+# === Detect if terminal is not UTF-8 compatible (e.g. cp1251 on Windows) ===
 CLEAN_OUTPUT = (platform.system() == "Windows" and (sys.stdout.encoding or '').lower() != "utf-8")
 
 def clean_text(text: str) -> str:
@@ -37,10 +38,10 @@ def clean_text(text: str) -> str:
 
 def clean_directories():
     """
-    Remove all files in folders that store generated data.
-    Keeps raw datasets untouched.
+    Clear old generated data (models, reports, processed files, plots).
+    Keep raw datasets untouched.
     """
-    print(clean_text("---- Cleaning previous outputs ----"))
+    print(clean_text("🧹 Cleaning previous outputs..."))
     for folder in FOLDERS_TO_CLEAN:
         if os.path.exists(folder):
             for filename in os.listdir(folder):
@@ -51,14 +52,14 @@ def clean_directories():
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as e:
-                    print(f"⚠️ Failed to delete {file_path}: {e}")
-    print(clean_text("++++ Cleanup complete ++++\n"))
+                    print(clean_text(f"⚠️ Failed to delete {file_path}: {e}"))
+    print(clean_text("✅ Cleanup complete.\n"))
 
 def run_script(script_path: str):
     """
-    Execute a script using subprocess and print formatted status with output.
+    Run a single Python script as subprocess and show output clearly.
     """
-    print(clean_text(f"\n==== Running: {script_path} ===="))
+    print(clean_text(f"\n📄 Running: {script_path}"))
     result = subprocess.run(
         [sys.executable, script_path],
         stdout=subprocess.PIPE,
@@ -66,21 +67,23 @@ def run_script(script_path: str):
         text=True
     )
     if result.returncode == 0:
-        print(clean_text(f"++++ Finished: {script_path} ++++"))
+        print(clean_text(f"✅ Finished: {script_path}"))
         print(clean_text(result.stdout))
     else:
-        print(clean_text(f"!!!! Error in: {script_path} !!!!"))
+        print(clean_text(f"❌ Error in {script_path}"))
         print(clean_text(result.stderr))
 
 def main():
     """
-    Main pipeline controller: cleans up, runs each script, reports status.
+    Run the full pipeline in sequence with a progress bar and clear logs.
     """
-    print(clean_text("==== 🚀 Starting full pipeline ===="))
+    print(clean_text("🚀 Starting full pipeline...\n"))
     clean_directories()
-    for script in SCRIPTS:
+
+    for script in tqdm(SCRIPTS, desc=clean_text("🧠 Running scripts"), ncols=80, colour="green"):
         run_script(script)
-    print(clean_text("\n==== 🎉 Pipeline complete! ===="))
+
+    print(clean_text("\n🎉 Pipeline complete! All steps finished successfully."))
 
 if __name__ == "__main__":
     main()
