@@ -1,5 +1,10 @@
 import subprocess
 from pathlib import Path
+import sys
+
+BASE_DIR = Path(__file__).resolve().parent
+VENV_PYTHON = BASE_DIR / ".venv" / "Scripts" / "python.exe"  # для Windows
+# VENV_PYTHON = BASE_DIR / ".venv" / "bin" / "python"  # для Linux/Mac
 
 SCRIPTS = [
     "scripts/preprocess_anxiety_data.py",
@@ -15,7 +20,7 @@ def run_pipeline():
     print("🚀 Starting full pipeline...")
     for script in SCRIPTS:
         print(f"\n📄 Running: {script}")
-        result = subprocess.run(["python", script], capture_output=True, text=True)
+        result = subprocess.run([str(VENV_PYTHON), script], capture_output=True, text=True)
 
         if result.returncode != 0:
             print(f"❌ Error in {script}")
