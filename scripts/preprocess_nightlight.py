@@ -1,7 +1,10 @@
 import pandas as pd
 from pathlib import Path
 
+# Абсолютный путь к проекту
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Пути к файлам
 RAW_PATH = BASE_DIR / "data/raw/VIIRS-nighttime-lights-2013m1to2024m5-level0.csv"
 PROCESSED_PATH = BASE_DIR / "data/processed/nightlight_2019.csv"
 
@@ -12,8 +15,8 @@ def main():
     print("🔍 Filtering for year 2019...")
     df_2019 = df[df["year"] == 2019]
 
-    print("📊 Grouping by country and averaging light...")
-    df_grouped = df_2019.groupby("iso_alpha3", as_index=False)["mean"].mean()
+    print("📊 Grouping by country and averaging nlsum...")
+    df_grouped = df_2019.groupby("iso", as_index=False)["nlsum"].mean()
     df_grouped.columns = ["Country_Code", "Light_Intensity"]
 
     print("💾 Saving to processed CSV...")
