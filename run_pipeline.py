@@ -5,8 +5,9 @@ import platform
 import re
 import shutil
 from tqdm import tqdm
+from datetime import datetime
 
-# === List of scripts to run in order ===
+# === Scripts to run ===
 SCRIPTS = [
     "scripts/preprocess_anxiety_data.py",
     "scripts/preprocess_nightlight.py",
@@ -17,7 +18,7 @@ SCRIPTS = [
     "scripts/final_map.py"
 ]
 
-# === Folders to clear before pipeline run (but NOT data/raw) ===
+# === Folders to clean ===
 FOLDERS_TO_CLEAN = [
     "data/processed",
     "models",
@@ -25,23 +26,36 @@ FOLDERS_TO_CLEAN = [
     "outputs/plots"
 ]
 
-# === Detect if terminal is not UTF-8 compatible (e.g. cp1251 on Windows) ===
+# === Emoji stripping on broken Windows encoding ===
 CLEAN_OUTPUT = (platform.system() == "Windows" and (sys.stdout.encoding or '').lower() != "utf-8")
 
+# === Dynamic log filename ===
+now_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, f"pipeline_{now_str}.log")
+
 def clean_text(text: str) -> str:
-    """
-    Remove emojis and non-ASCII characters if terminal does not support them.
-    """
+    """Remove emojis if terminal encoding is broken."""
     if CLEAN_OUTPUT:
         return re.sub(r'[^\x00-\x7F]+', '', text)
     return text
 
+def log_write(message: str):
+    """Append message to log file (UTF-8)."""
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(message + "\n")
+
+def init_log():
+    """Start new log file with header."""
+    with open(LOG_FILE, "w", encoding="utf-8") as f:
+        f.write(f"🕒 Pipeline started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write("=" * 80 + "\n")
+
 def clean_directories():
-    """
-    Clear old generated data (models, reports, processed files, plots).
-    Keep raw datasets untouched.
-    """
+    """Remove previous generated files from selected folders."""
     print(clean_text("🧹 Cleaning previous outputs..."))
+    log_write("🧹 Cleaning previous outputs...")
     for folder in FOLDERS_TO_CLEAN:
         if os.path.exists(folder):
             for filename in os.listdir(folder):
@@ -52,38 +66,48 @@ def clean_directories():
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                 except Exception as e:
-                    print(clean_text(f"⚠️ Failed to delete {file_path}: {e}"))
+                    msg = f"⚠️ Failed to delete {file_path}: {e}"
+                    print(clean_text(msg))
+                    log_write(msg)
     print(clean_text("✅ Cleanup complete.\n"))
+    log_write("✅ Cleanup complete.\n")
 
 def run_script(script_path: str):
-    """
-    Run a single Python script as subprocess and show output clearly.
-    """
-    print(clean_text(f"\n📄 Running: {script_path}"))
+    """Run one script and log output/errors."""
+    header = f"\n📄 Running: {script_path}"
+    print(clean_text(header))
+    log_write(header)
+
     result = subprocess.run(
         [sys.executable, script_path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True
     )
+
     if result.returncode == 0:
-        print(clean_text(f"✅ Finished: {script_path}"))
-        print(clean_text(result.stdout))
+        msg = f"✅ Finished: {script_path}"
+        print(clean_text(msg))
+        log_write(msg)
+        log_write("▶ Output:\n" + result.stdout.strip())
     else:
-        print(clean_text(f"❌ Error in {script_path}"))
-        print(clean_text(result.stderr))
+        err = f"❌ Error in {script_path}"
+        print(clean_text(err))
+        log_write(err)
+        log_write("💥 Error output:\n" + result.stderr.strip())
 
 def main():
-    """
-    Run the full pipeline in sequence with a progress bar and clear logs.
-    """
+    """Main controller."""
     print(clean_text("🚀 Starting full pipeline...\n"))
+    init_log()
     clean_directories()
 
     for script in tqdm(SCRIPTS, desc=clean_text("🧠 Running scripts"), ncols=80, colour="green"):
         run_script(script)
 
-    print(clean_text("\n🎉 Pipeline complete! All steps finished successfully."))
+    final_msg = "\n🎉 Pipeline complete!"
+    print(clean_text(final_msg))
+    log_write(final_msg)
 
 if __name__ == "__main__":
     main()
