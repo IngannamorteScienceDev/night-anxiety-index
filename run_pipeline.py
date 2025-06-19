@@ -1,10 +1,8 @@
 import subprocess
-from pathlib import Path
+import os
 import sys
-
-BASE_DIR = Path(__file__).resolve().parent
-VENV_PYTHON = BASE_DIR / ".venv" / "Scripts" / "python.exe"  # для Windows
-# VENV_PYTHON = BASE_DIR / ".venv" / "bin" / "python"  # для Linux/Mac
+import platform
+import re
 
 SCRIPTS = [
     "scripts/preprocess_anxiety_data.py",
@@ -16,21 +14,34 @@ SCRIPTS = [
     "scripts/final_map.py"
 ]
 
-def run_pipeline():
-    print("🚀 Starting full pipeline...")
+CLEAN_OUTPUT = (platform.system() == "Windows" and sys.stdout.encoding.lower() != "utf-8")
+
+def clean_text(text):
+    if CLEAN_OUTPUT:
+        return re.sub(r'[^\x00-\x7F]+', '', text)
+    return text
+
+def run_script(script_path):
+    print(clean_text(f"\n📄 Running: {script_path}"))
+    result = subprocess.run(
+        [sys.executable, script_path],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    if result.returncode == 0:
+        print(clean_text(f"✅ Finished: {script_path}"))
+        print(clean_text(result.stdout))
+    else:
+        print(clean_text(f"❌ Error in {script_path}"))
+        print(clean_text(result.stderr))
+
+def main():
+    print(clean_text("🚀 Starting full pipeline..."))
     for script in SCRIPTS:
-        print(f"\n📄 Running: {script}")
-        result = subprocess.run([str(VENV_PYTHON), script], capture_output=True, text=True)
-
-        if result.returncode != 0:
-            print(f"❌ Error in {script}")
-            print(result.stderr)
-            break
-        else:
-            print(f"✅ Finished: {script}")
-            print(result.stdout)
-
-    print("\n🎉 Pipeline complete!")
+        run_script(script)
+    print(clean_text("\n🎉 Pipeline complete!"))
 
 if __name__ == "__main__":
-    run_pipeline()
+    main()
